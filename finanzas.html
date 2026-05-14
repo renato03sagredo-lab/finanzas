@@ -78,6 +78,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font-
 .aibox strong{display:block;font-weight:700;margin-bottom:3px;}
 .savebtn{width:100%;padding:16px;background:var(--tx);color:var(--bg);border:none;border-radius:var(--r);font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;}
 .savebtn:active{opacity:0.8;}
+.delbtn{width:100%;padding:14px;background:none;color:var(--red);border:1.5px solid var(--red);border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;}
+.delbtn:active{background:var(--red);color:var(--bg);}
 input[type=file]{display:none;}
 .mbody{flex:1;overflow-y:auto;padding:16px;}
 .citem{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--bd);}
@@ -157,6 +159,32 @@ input[type=file]{display:none;}
     </div>
   </div>
 
+  <div id="s-edit" class="scr">
+    <div class="hdr">
+      <button class="ibtn" onclick="go('s-home')">←</button>
+      <h1>Editar gasto</h1>
+    </div>
+    <div class="fbody">
+      <div class="fld">
+        <label>Monto (CLP)</label>
+        <input class="ainput" type="number" id="e-amt" placeholder="$0" inputmode="numeric">
+      </div>
+      <div class="fld">
+        <label>Descripción <span style="font-weight:400;color:var(--tx3)">(opcional)</span></label>
+        <input type="text" id="e-dsc" placeholder="Ej: Almuerzo, supermercado...">
+      </div>
+      <label style="display:block;font-size:13px;color:var(--tx2);font-weight:500;margin-bottom:9px;">Categoría</label>
+      <div class="cgrid" id="e-cgrid"></div>
+      <div class="fld">
+        <label>Fecha</label>
+        <input type="date" id="e-dte">
+      </div>
+      <div style="height:18px"></div>
+      <button class="savebtn" onclick="updExp()">Guardar cambios</button>
+      <button class="delbtn" onclick="delFromEdit()">Eliminar gasto</button>
+    </div>
+  </div>
+
   <div id="s-cats" class="scr">
     <div class="hdr">
       <button class="ibtn" onclick="go('s-home')">←</button>
@@ -183,14 +211,19 @@ function ld(){return JSON.parse(localStorage.getItem('gv3')||'null')||{cats:[{id
 function sv(){localStorage.setItem('gv3',JSON.stringify(S));}
 let S=ld(),selC=null,aT='l';
 function fmt(n){return '$'+Math.round(n).toLocaleString('es-CL');}
-function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');if(id==='s-home')rH();if(id==='s-add')iA();if(id==='s-cats')rC();}
+function go(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');if(id==='s-home')rH();if(id==='s-add')iA();if(id==='s-cats')rC();if(id==='s-edit')iEd();}
 function chM(d){S.mo+=d;if(S.mo<0){S.mo=11;S.yr--;}if(S.mo>11){S.mo=0;S.yr++;}sv();rH();}
 function mE(){return S.exps.filter(e=>{const dt=new Date(e.dt+'T12:00:00');return dt.getMonth()===S.mo&&dt.getFullYear()===S.yr;}).sort((a,b)=>new Date(b.dt)-new Date(a.dt));}
 function swT(t){aT=t;document.getElementById('tl').classList.toggle('on',t==='l');document.getElementById('tc').classList.toggle('on',t==='c');document.getElementById('pl').style.display=t==='l'?'':'none';document.getElementById('pc').style.display=t==='c'?'':'none';if(t==='c')rBC();}
 function rH(){document.getElementById('mlbl').textContent=MN[S.mo]+' '+S.yr;const ex=mE();const tot=ex.reduce((s,e)=>s+e.amt,0);document.getElementById('h-tot').textContent=fmt(tot);document.getElementById('h-cnt').textContent=ex.length;rL(ex);if(aT==='c')rBC();}
-function rL(ex){const el=document.getElementById('pl');if(!ex.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><p>Sin gastos este mes.<br>Toca + para agregar uno.</p></div>';return;}el.innerHTML='<div class="list">'+ex.map(e=>{const cat=S.cats.find(c=>c.id===e.cid)||{name:'Otro',e:'📌'};const dt=new Date(e.dt+'T12:00:00');const day=dt.getDate()+' '+MN[dt.getMonth()].slice(0,3);return`<div class="eitem" onclick="tD('${e.id}')"><div class="cbub">${cat.e}</div><div class="einfo"><div class="ename">${e.dsc||cat.name}</div><div class="esub">${cat.name} · ${day}</div></div><div class="eamt">${fmt(e.amt)}</div></div>`;}).join('')+'</div>';}
+function rL(ex){const el=document.getElementById('pl');if(!ex.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><p>Sin gastos este mes.<br>Toca + para agregar uno.</p></div>';return;}el.innerHTML='<div class="list">'+ex.map(e=>{const cat=S.cats.find(c=>c.id===e.cid)||{name:'Otro',e:'📌'};const dt=new Date(e.dt+'T12:00:00');const day=dt.getDate()+' '+MN[dt.getMonth()].slice(0,3);return`<div class="eitem" onclick="oE('${e.id}')"><div class="cbub">${cat.e}</div><div class="einfo"><div class="ename">${e.dsc||cat.name}</div><div class="esub">${cat.name} · ${day}</div></div><div class="eamt">${fmt(e.amt)}</div></div>`;}).join('')+'</div>';}
 function rBC(){const ex=mE();const tot=ex.reduce((s,e)=>s+e.amt,0)||1;const mp={};ex.forEach(e=>{mp[e.cid]=(mp[e.cid]||0)+e.amt;});const sr=Object.entries(mp).sort((a,b)=>b[1]-a[1]);const el=document.getElementById('pc');if(!sr.length){el.innerHTML='<div class="empty"><div class="eico">📊</div><p>Sin datos este mes.</p></div>';return;}el.innerHTML='<div class="bycat">'+sr.map(([cid,amt])=>{const cat=S.cats.find(c=>c.id===cid)||{name:'Otro',e:'📌'};const pct=Math.round(amt/tot*100);return`<div class="crow"><span class="cemo">${cat.e}</span><span class="cname">${cat.name}</span><div class="btrack"><div class="bfill" style="width:${pct}%"></div></div><span class="camt">${fmt(amt)}</span></div>`;}).join('')+'</div>';}
-function tD(id){if(confirm('¿Eliminar este gasto?')){S.exps=S.exps.filter(e=>e.id!==id);sv();rH();}}
+let editId=null,eSelC=null;
+function oE(id){editId=id;go('s-edit');}
+function iEd(){const e=S.exps.find(x=>x.id===editId);if(!e)return;document.getElementById('e-amt').value=e.amt;document.getElementById('e-dsc').value=e.dsc||'';document.getElementById('e-dte').value=e.dt;eSelC=e.cid;document.getElementById('e-cgrid').innerHTML=S.cats.map(c=>`<button class="cbtn" id="ecb-${c.id}" onclick="eC('${c.id}')">${c.e} ${c.name}</button>`).join('');const sb=document.getElementById('ecb-'+e.cid);if(sb)sb.classList.add('sel');}
+function eC(id){eSelC=id;document.querySelectorAll('#e-cgrid .cbtn').forEach(b=>b.classList.remove('sel'));document.getElementById('ecb-'+id).classList.add('sel');}
+function updExp(){const amt=parseFloat(document.getElementById('e-amt').value);const dsc=document.getElementById('e-dsc').value.trim();const dt=document.getElementById('e-dte').value;if(!amt||amt<=0){toast('Ingresa un monto válido');return;}if(!eSelC){toast('Selecciona una categoría');return;}if(!dt){toast('Elige una fecha');return;}const e=S.exps.find(x=>x.id===editId);if(!e)return;e.amt=amt;e.dsc=dsc;e.cid=eSelC;e.dt=dt;sv();toast('Gasto actualizado ✓');go('s-home');}
+function delFromEdit(){if(confirm('¿Eliminar este gasto?')){S.exps=S.exps.filter(e=>e.id!==editId);sv();toast('Gasto eliminado');go('s-home');}}
 function iA(){selC=null;document.getElementById('f-amt').value='';document.getElementById('f-dsc').value='';document.getElementById('f-dte').value=new Date().toISOString().split('T')[0];document.getElementById('aibox').style.display='none';rP();document.getElementById('f-cgrid').innerHTML=S.cats.map(c=>`<button class="cbtn" id="cb-${c.id}" onclick="sC('${c.id}')">${c.e} ${c.name}</button>`).join('');}
 function sC(id){selC=id;document.querySelectorAll('.cbtn').forEach(b=>b.classList.remove('sel'));document.getElementById('cb-'+id).classList.add('sel');}
 function saveExp(){const amt=parseFloat(document.getElementById('f-amt').value);const dsc=document.getElementById('f-dsc').value.trim();const dt=document.getElementById('f-dte').value;if(!amt||amt<=0){toast('Ingresa un monto válido');return;}if(!selC){toast('Selecciona una categoría');return;}if(!dt){toast('Elige una fecha');return;}S.exps.push({id:'e'+Date.now(),amt,dsc,cid:selC,dt});sv();toast('Gasto guardado ✓');go('s-home');}
