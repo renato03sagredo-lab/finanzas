@@ -1,6 +1,3 @@
-import math
-
-
 def divisores_propios_impares(n):
     if n <= 1:
         return 0
@@ -33,11 +30,22 @@ def es_borel(n):
     return pequenos <= grandes
 
 
+def raiz_entera(n):
+    if n < 0:
+        return 0
+    r = int(n ** 0.5)
+    while r * r > n:
+        r -= 1
+    while (r + 1) * (r + 1) <= n:
+        r += 1
+    return r
+
+
 def es_pentagonal(n):
     if n <= 0:
         return False
     disc = 1 + 24 * n
-    raiz = int(math.isqrt(disc))
+    raiz = raiz_entera(disc)
     if raiz * raiz != disc:
         return False
     return (1 + raiz) % 6 == 0
