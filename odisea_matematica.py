@@ -65,14 +65,15 @@ def main():
         print(f"Jugador: {i} - RUT: {rut}")
 
         if es_gauss(numero) and es_borel(numero) and es_pentagonal(numero):
-            print(f"Número {numero} SI permite desbloquear el portal")
+            print(f"Número {numero} SI permite desbloquear portal")
             exitos += 1
         else:
-            print(f"Número {numero} NO permite desbloquear el portal")
+            print(f"Número {numero} NO permite desbloquear portal")
             fracasos += 1
 
-    print(f"Total de jugadores que lograron desbloquear: {exitos}")
-    print(f"Total de jugadores que no lograron desbloquear: {fracasos}")
+    print()
+    print(f"Total de jugadores que SI desbloquean portal = {exitos}")
+    print(f"Total de jugadores que NO desbloquean portal = {fracasos}")
 
 
 main()
